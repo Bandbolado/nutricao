@@ -27,7 +27,11 @@ const MUSCLE_GROUPS = {
   biceps: 'Bíceps',
   triceps: 'Tríceps',
   core: 'Core/Abdômen',
-  hiit: 'HIIT/Cardio'
+  hiit: 'HIIT/Cardio',
+  peito_triceps: 'Peito + Tríceps (conjugado)',
+  costas_biceps: 'Costas + Bíceps (conjugado)',
+  ombros_trapezio: 'Ombros + Trapézio (conjugado)',
+  pernas_gluteo: 'Pernas + Glúteo (conjugado)'
 };
 
 const TRAINING_TYPES = {
@@ -69,7 +73,7 @@ async function startWorkoutFlow(ctx) {
   await ctx.replyWithMarkdown(
     '🏋️ *Gerar Treino Personalizado*\n\n' +
       'Vamos montar seu treino em poucos passos:\n' +
-      '1) Nível\n2) Grupamento\n3) Tipo de treino\n4) Séries\n\n' +
+      '1) Nível\n2) Grupamento (inclui conjugados ex: Peito + Tríceps)\n3) Tipo de treino\n4) Séries\n\n' +
       'Escolha o seu nível:',
     keyboard
   );
@@ -169,7 +173,7 @@ async function generateWorkout(ctx, telegramId) {
   const prompt = [
     'Gere um treino de musculação em português, com Markdown limpo e espaçado.',
     `Nível: ${state.level}.`,
-    `Grupamento principal: ${state.group}.`,
+    `Grupamento principal ou conjugado: ${state.group}.`,
     `Estratégia: ${state.trainingType}.`,
     `Quantidade de exercícios: ${state.exercises}.`,
     'Formato desejado (sem tabelas):',
