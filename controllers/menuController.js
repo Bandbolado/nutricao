@@ -26,6 +26,8 @@ const MENU_ACTIONS = {
   WORKOUT_GENERATOR: 'MENU_WORKOUT_GENERATOR', // Novo: Gerador de Treinos (OpenAI)
   CALORIE_LOG: 'MENU_CALORIE_LOG', // Novo: Registrar alimentos e kcal
   REFERRAL: 'MENU_REFERRAL', // Novo: Indicar Amigo
+  FAQ: 'MENU_FAQ', // Novo: FAQ automático
+  BOOKING: 'MENU_BOOKING', // Novo: Agendar consulta
   ADMIN_DASHBOARD: 'MENU_ADMIN_DASHBOARD', // Novo: Dashboard Admin
   ACTIVITY_MENU: 'activity_menu', // Novo: Nível de Atividade
 };
@@ -60,12 +62,17 @@ const buildMainMenu = (planStatus = 'inactive', isAdmin = false) =>
       Markup.button.callback('📸 Diário Alimentar', MENU_ACTIONS.FOOD_DIARY),
       Markup.button.callback('🍽️ Receitas', MENU_ACTIONS.RECIPES)
     ],
-    [Markup.button.callback('🏋️ Gerar Treino', MENU_ACTIONS.WORKOUT_GENERATOR)],
+      [Markup.button.callback('🏋️ Gerar Treino', MENU_ACTIONS.WORKOUT_GENERATOR)],
     // Linha do Relatório e Indicações
     [
       Markup.button.callback('📊 Meu Relatório', MENU_ACTIONS.REPORT),
       Markup.button.callback('🎁 Indicar Amigo', MENU_ACTIONS.REFERRAL)
     ],
+      // FAQ e Agendamento
+      [
+        Markup.button.callback('❓ FAQ', MENU_ACTIONS.FAQ),
+        Markup.button.callback('📅 Agendar Consulta', MENU_ACTIONS.BOOKING)
+      ],
     // Linha do Questionário (só aparece se plano ativo)
     ...(planStatus === 'active' ? [[
       Markup.button.callback('📝 Enviar Questionário ⭐', MENU_ACTIONS.FOOD_RECORD),

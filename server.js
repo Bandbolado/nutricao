@@ -21,6 +21,8 @@ const dashboardController = require('./controllers/dashboardController'); // NOV
 const activityController = require('./controllers/activityController'); // NOVO
 const workoutController = require('./controllers/workoutController'); // NOVO
 const calorieController = require('./controllers/calorieController'); // NOVO
+const faqController = require('./controllers/faqController'); // NOVO
+const bookingController = require('./controllers/bookingController'); // NOVO
 const reminderService = require('./services/reminderService');
 const paymentService = require('./services/paymentService');
 const { MENU_ACTIONS, buildMainMenu, sendMainMenu, requireRegistration, requireActivePlan } = require('./controllers/menuController');
@@ -40,6 +42,7 @@ bot.catch((err) => {
 });
 
 bot.start(patientController.handleStart);
+bot.command('faq', async (ctx) => faqController.handleFaqCommand(ctx));
 bot.command('menu', async (ctx) => {
   const adminService = require('./services/adminService');
   
@@ -139,6 +142,41 @@ bot.action(MENU_ACTIONS.REMINDERS, requireActivePlan(async (ctx) => {
 bot.action(MENU_ACTIONS.CHAT_NUTRITIONIST, requireActivePlan(async (ctx) => {
   await ctx.answerCbQuery();
   await chatController.startChat(ctx);
+}));
+
+// FAQ
+bot.action(MENU_ACTIONS.FAQ, async (ctx) => {
+  await ctx.answerCbQuery();
+  await faqController.showFaqMenu(ctx);
+});
+
+bot.action(/^FAQ_TOPIC_(.+)$/, async (ctx) => {
+  const topicId = ctx.match[1];
+  await faqController.handleTopic(ctx, topicId);
+});
+
+// Agendamento de consultas
+bot.action(MENU_ACTIONS.BOOKING, requireActivePlan(async (ctx) => {
+  await ctx.answerCbQuery();
+  await bookingController.showBookingMenu(ctx);
+}));
+
+bot.action(/^BOOK_DUR_(\d+)$/, requireActivePlan(async (ctx) => {
+  const minutes = parseInt(ctx.match[1], 10);
+  await bookingController.selectDuration(ctx, minutes);
+}));
+
+bot.action(/^BOOK_SLOT_(\d+)$/, requireActivePlan(async (ctx) => {
+  const idx = parseInt(ctx.match[1], 10);
+  await bookingController.selectSlot(ctx, idx);
+}));
+
+bot.action('BOOK_CONFIRM', requireActivePlan(async (ctx) => {
+  await bookingController.confirmBooking(ctx);
+}));
+
+bot.action('BOOK_BACK', requireActivePlan(async (ctx) => {
+  await bookingController.back(ctx);
 }));
 
 bot.action(MENU_ACTIONS.FOOD_RECORD, requireRegistration(async (ctx) => {
@@ -537,6 +575,10 @@ bot.on('text', async (ctx) => {
   // Verifica se está no fluxo de ingredientes para receitas
   const pantryHandled = await recipesController.handlePantryInput(ctx);
   if (pantryHandled) return;
+
+  // FAQ automático por palavra-chave
+  const faqHandled = await faqController.maybeHandleFaqMessage(ctx);
+  if (faqHandled) return;
 
   // Verifica se é resposta de cadastro
   const handled = await patientController.handleRegistrationResponse(ctx, bot);
