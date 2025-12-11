@@ -259,6 +259,13 @@ bot.action(/^workout_exercises_(\d+)$/, requireActivePlan(async (ctx) => {
   await workoutController.selectExercises(ctx, exercises);
 }));
 
+// Salvar peso base do treino
+bot.action(/^WORKOUT_SAVE_WEIGHT\|(.+)\|(.+)$/, requireActivePlan(async (ctx) => {
+  const groupKey = ctx.match[1];
+  const trainingTypeKey = ctx.match[2];
+  await workoutController.promptWeightSave(ctx, groupKey, trainingTypeKey);
+}));
+
 // Receitas
 bot.action(MENU_ACTIONS.RECIPES, requireActivePlan(async (ctx) => {
   await ctx.answerCbQuery();
@@ -575,6 +582,10 @@ bot.on('text', async (ctx) => {
   // Verifica se está no fluxo de ingredientes para receitas
   const pantryHandled = await recipesController.handlePantryInput(ctx);
   if (pantryHandled) return;
+
+  // Verifica se está salvando peso base de treino
+  const workoutWeightHandled = await workoutController.handleWeightInput(ctx);
+  if (workoutWeightHandled) return;
 
   // FAQ automático por palavra-chave
   const faqHandled = await faqController.maybeHandleFaqMessage(ctx);
