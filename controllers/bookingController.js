@@ -1,6 +1,7 @@
 'use strict';
 
 const { Markup } = require('telegraf');
+const { getPatientByTelegramId } = require('../services/patientService');
 
 // Estado simples em memória. Para produção, mover para Supabase.
 const bookingState = new Map();
@@ -82,11 +83,31 @@ async function confirmBooking(ctx) {
     return;
   }
 
+  const patient = await getPatientByTelegramId(ctx.from.id);
+
+  const adminId = process.env.ADMIN_TELEGRAM_ID;
+  if (adminId) {
+    const adminMsg = [
+      '📅 *Nova solicitação de consulta*',
+      `Paciente: ${patient?.name || 'desconhecido'} (id: ${ctx.from.id})`,
+      `Duração: ${state.duration} min`,
+      `Data/hora: ${state.slot.label}`,
+      '',
+      'Confirme e envie o link do Meet/Zoom para o paciente.'
+    ].join('\n');
+
+    try {
+      await ctx.telegram.sendMessage(adminId, adminMsg, { parse_mode: 'Markdown' });
+    } catch (err) {
+      console.error('Falha ao notificar admin sobre agendamento:', err.message);
+    }
+  }
+
   // Aqui integrar com Google Calendar futuramente.
   bookingState.delete(ctx.from.id);
 
   await ctx.editMessageText(
-    '✅ Solicitação enviada!\n\nVamos confirmar e enviar o link da consulta. ' +
+    '✅ Solicitação enviada!\n\nA Nutri foi notificada e vai confirmar o link da consulta. ' +
       'Caso precise trocar horário, responda esta mensagem.',
     Markup.inlineKeyboard([[Markup.button.callback('🔙 Voltar', 'back_to_menu')]])
   );
