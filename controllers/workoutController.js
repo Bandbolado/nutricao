@@ -35,6 +35,7 @@ const MUSCLE_GROUPS = {
 };
 
 const TRAINING_TYPES = {
+  normal: 'Tradicional/Normal',
   piramide: 'Pirâmide',
   gvt: 'GVT (10x10)',
   circuito: 'Circuito',
@@ -152,6 +153,7 @@ async function selectExercises(ctx, exercisesValue) {
   if (!state || !EXERCISE_OPTIONS.includes(exercisesValue)) return;
 
   workoutState.set(telegramId, { ...state, exercises: exercisesValue });
+  await ctx.reply('⏳ Gerando seu treino... isso leva cerca de 30s. Aguarde e não clique novamente.');
   await generateWorkout(ctx, telegramId);
 }
 
