@@ -19,7 +19,6 @@ const LEVELS = {
 };
 
 const MUSCLE_GROUPS = {
-  fullbody: 'Corpo inteiro',
   peito: 'Peito',
   costas: 'Costas',
   pernas: 'Pernas (quadríceps)',
@@ -279,7 +278,11 @@ async function handleWeightInput(ctx) {
     await ctx.replyWithMarkdown(`✅ Peso base salvo: *${weight} kg*`);
   } catch (err) {
     console.error('Erro ao salvar peso:', err.message);
-    await ctx.reply('❌ Não consegui salvar agora. Tente novamente.');
+    if (err.message && err.message.includes('workout_weights')) {
+      await ctx.reply('❌ Tabela workout_weights não encontrada. Rode a migration 021_workout_weights.sql no Supabase.');
+    } else {
+      await ctx.reply('❌ Não consegui salvar agora. Tente novamente.');
+    }
   } finally {
     weightInputState.delete(ctx.from.id);
   }
