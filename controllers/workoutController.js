@@ -10,7 +10,6 @@ const openaiClient = process.env.OPENAI_API_KEY
 const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 
 const workoutState = new Map();
-const weightInputState = new Map();
 
 const LEVELS = {
   iniciante: 'Iniciante',
@@ -107,7 +106,7 @@ async function selectGroup(ctx, groupKey) {
   const state = workoutState.get(telegramId);
   if (!state || !MUSCLE_GROUPS[groupKey]) return;
 
-  workoutState.set(telegramId, { ...state, group: MUSCLE_GROUPS[groupKey], groupKey });
+  workoutState.set(telegramId, { ...state, group: MUSCLE_GROUPS[groupKey] });
 
   const buttons = Object.entries(TRAINING_TYPES).map(([key, label]) =>
     Markup.button.callback(label, `workout_type_${key}`)
@@ -130,7 +129,7 @@ async function selectTrainingType(ctx, typeKey) {
   const state = workoutState.get(telegramId);
   if (!state || !TRAINING_TYPES[typeKey]) return;
 
-  workoutState.set(telegramId, { ...state, trainingType: TRAINING_TYPES[typeKey], trainingTypeKey: typeKey });
+  workoutState.set(telegramId, { ...state, trainingType: TRAINING_TYPES[typeKey] });
 
   const buttons = EXERCISE_OPTIONS.map((n) => Markup.button.callback(`${n} exercícios`, `workout_exercises_${n}`));
 
@@ -169,18 +168,6 @@ async function generateWorkout(ctx, telegramId) {
       '❌ OPENAI_API_KEY não configurada. Adicione as variáveis OPENAI_API_KEY e OPENAI_MODEL no .env e reinicie o bot.'
     );
     return;
-  }
-
-  // Busca peso base salvo para este grupamento + tipo
-  let savedWeightText = '';
-  try {
-    const { getSavedWeight } = require('../services/workoutWeightService');
-    const saved = await getSavedWeight(telegramId, state.groupKey, state.trainingTypeKey);
-    if (saved?.weight_kg) {
-      savedWeightText = `\n*Peso base salvo:* ${saved.weight_kg} kg`;
-    }
-  } catch (err) {
-    console.warn('Não foi possível buscar peso salvo:', err.message);
   }
 
   const prompt = [
@@ -228,10 +215,7 @@ async function generateWorkout(ctx, telegramId) {
       throw new Error('Resposta vazia do modelo');
     }
 
-    const saveWeightCb = `WORKOUT_SAVE_WEIGHT|${state.groupKey}|${state.trainingTypeKey}`;
-
     const keyboard = Markup.inlineKeyboard([
-      [Markup.button.callback('💾 Salvar peso base', saveWeightCb)],
       [Markup.button.callback('🔁 Novo treino', 'workout_restart')],
       [Markup.button.callback('🔙 Voltar ao Menu', 'back_to_menu')]
     ]);
@@ -241,7 +225,7 @@ async function generateWorkout(ctx, telegramId) {
         `*Nível:* ${state.level}\n` +
         `*Grupamento:* ${state.group}\n` +
         `*Estratégia:* ${state.trainingType}\n` +
-        `*Exercícios no treino:* ${state.exercises}${savedWeightText}\n\n` +
+        `*Exercícios no treino:* ${state.exercises}\n\n` +
         'Confira o plano abaixo:'
     );
 
@@ -255,47 +239,10 @@ async function generateWorkout(ctx, telegramId) {
   }
 }
 
-// Fluxo de salvamento de peso base
-async function promptWeightSave(ctx, groupKey, trainingTypeKey) {
-  weightInputState.set(ctx.from.id, { groupKey, trainingTypeKey });
-  await ctx.reply('Digite o peso (kg) do primeiro set para este treino. Ex: 32.5');
-}
-
-async function handleWeightInput(ctx) {
-  const pending = weightInputState.get(ctx.from.id);
-  if (!pending) return false;
-
-  const raw = (ctx.message?.text || '').replace(',', '.').trim();
-  const weight = parseFloat(raw);
-  if (Number.isNaN(weight) || weight <= 0) {
-    await ctx.reply('Envie apenas o número do peso em kg. Ex: 32.5');
-    return true;
-  }
-
-  try {
-    const { saveWeight } = require('../services/workoutWeightService');
-    await saveWeight(ctx.from.id, pending.groupKey, pending.trainingTypeKey, weight);
-    await ctx.replyWithMarkdown(`✅ Peso base salvo: *${weight} kg*`);
-  } catch (err) {
-    console.error('Erro ao salvar peso:', err.message);
-    if (err.message && err.message.includes('workout_weights')) {
-      await ctx.reply('❌ Tabela workout_weights não encontrada. Rode a migration 021_workout_weights.sql no Supabase.');
-    } else {
-      await ctx.reply('❌ Não consegui salvar agora. Tente novamente.');
-    }
-  } finally {
-    weightInputState.delete(ctx.from.id);
-  }
-
-  return true;
-}
-
 module.exports = {
   startWorkoutFlow,
   selectLevel,
   selectGroup,
   selectTrainingType,
-  selectExercises,
-  promptWeightSave,
-  handleWeightInput
+  selectExercises
 };
