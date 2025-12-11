@@ -33,7 +33,13 @@ const registrationSteps = [
   }},
   { key: 'weight', question: '⚖️ *Passo 4 de 8*\n\nQual é o seu *peso* em kg?\n_Exemplo: 70.5_', validator: validateWeight },
   { key: 'height', question: '📏 *Passo 5 de 8*\n\nQual é a sua *altura* em cm?\n_Exemplo: 175_', validator: validateHeight },
-  { key: 'activity_level', question: '🏃 *Passo 6 de 8*\n\nQual é o seu *nível de atividade*?\n\nResponda: Sedentário (S), Leve (L), Moderado (M), Ativo (A) ou Muito Ativo (MA).', validator: parseActivityLevel },
+  { key: 'activity_level', question: '🏃 *Passo 6 de 8*\n\nQual é o seu *nível de atividade*? Escolha e responda apenas a sigla:\n\n' +
+      '• S = Sedentário — Pouco ou nenhum exercício (x1.2)\n' +
+      '• L = Leve — 1-3x/semana (x1.375)\n' +
+      '• M = Moderado — 3-5x/semana (x1.55)\n' +
+      '• A = Ativo — 6-7x/semana (x1.725)\n' +
+      '• MA = Muito Ativo — Treino intenso/2x dia (x1.9)\n\n' +
+      'Responda: S, L, M, A ou MA.', validator: parseActivityLevel },
   { key: 'objective', question: '🎯 *Passo 7 de 8*\n\nQual é o seu *principal objetivo*?\n_Exemplo: Ganhar massa muscular, emagrecer, melhorar saúde..._', validator: validateObjective },
   { key: 'restrictions', question: '🥗 *Passo 8 de 8*\n\nPossui *restrições alimentares*?\n_Exemplo: Lactose, glúten, vegetariano...\nSe não tiver, responda: Sem restrições_', validator: validateRestrictions },
 ];
