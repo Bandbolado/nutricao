@@ -280,6 +280,11 @@ bot.action('recipes_generate_remaining', requireActivePlan(async (ctx) => {
   await recipesController.generateRecipeWithRemaining(ctx);
 }));
 
+bot.action('recipes_generate_target', requireActivePlan(async (ctx) => {
+  await ctx.answerCbQuery();
+  await recipesController.startTargetKcalFlow(ctx);
+}));
+
 bot.action(/^recipes_cat_(.+)$/, async (ctx) => {
   await ctx.answerCbQuery();
   const category = ctx.match[1];
@@ -571,6 +576,10 @@ bot.on('text', async (ctx) => {
   // Verifica se está no fluxo de registro de alimentos (kcal)
   const calorieHandled = await calorieController.handleCalorieLogMessage(ctx);
   if (calorieHandled) return;
+
+  // Verifica se está no fluxo de receita por kcal desejada
+  const targetKcalHandled = await recipesController.handleTargetKcalInput(ctx);
+  if (targetKcalHandled) return;
 
   // Verifica se está no fluxo de ingredientes para receitas
   const pantryHandled = await recipesController.handlePantryInput(ctx);

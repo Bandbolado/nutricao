@@ -12,6 +12,8 @@ const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 
 // Estado para fluxo de "o que tenho em casa"
 const pantryState = new Map();
+// Estado para fluxo de "receita por kcal desejada"
+const targetKcalState = new Map();
 
 /**
  * Mostra o menu de receitas
@@ -26,12 +28,19 @@ async function showRecipesMenu(ctx) {
             return ctx.reply('❌ Você precisa estar cadastrado para acessar as receitas.');
         }
 
+        const stats = await getDailyStats(telegramId);
+        const remaining = stats ? Math.max(0, Math.round(stats.remaining)) : null;
+
         const message = `🍽️ *Receita Inteligente*\n\n` +
-            `Gere uma receita automática com base nas kcal que faltam para sua meta de hoje.`;
+            (remaining !== null
+              ? `Kcal restantes hoje: *${remaining} kcal*\n`
+              : 'Kcal restantes: atualizar peso/altura/idade/sexo para calcular.\n') +
+            `Escolha uma opção:`;
 
         const keyboard = Markup.inlineKeyboard([
-            [Markup.button.callback('🤖 Gerar receita com minhas kcal restantes', 'recipes_generate_remaining')],
-            [Markup.button.callback('🍳 Gerar com o que tenho em casa', 'recipes_generate_pantry')],
+            [Markup.button.callback('🤖 Receita p/ kcal restante', 'recipes_generate_remaining')],
+            [Markup.button.callback('🎯 Receita por kcal', 'recipes_generate_target')],
+            [Markup.button.callback('🍳 Receita com meus itens', 'recipes_generate_pantry')],
             [Markup.button.callback('🔙 Voltar ao Menu', 'back_to_menu')]
         ]);
 
@@ -90,6 +99,71 @@ async function generateRecipeWithRemaining(ctx) {
         console.error('Erro ao gerar receita dinâmica:', error);
         await ctx.reply('❌ Erro ao gerar receita. Tente novamente.');
     }
+}
+
+// Inicia fluxo de receita por kcal informada pelo paciente
+async function startTargetKcalFlow(ctx) {
+    targetKcalState.set(ctx.from.id, { startedAt: Date.now() });
+    await ctx.replyWithMarkdown('🎯 *Receita por kcal desejada*\n\nEnvie um número em kcal. Ex: 520');
+}
+
+async function handleTargetKcalInput(ctx) {
+    const state = targetKcalState.get(ctx.from.id);
+    if (!state) return false;
+
+    // Expira em 10 minutos
+    if (Date.now() - state.startedAt > 10 * 60 * 1000) {
+        targetKcalState.delete(ctx.from.id);
+        await ctx.reply('⏱️ Sessão expirada. Toque em Receitas e escolha novamente.');
+        return true;
+    }
+
+    const raw = (ctx.message?.text || '').replace(',', '.').trim();
+    const kcal = parseFloat(raw);
+    if (Number.isNaN(kcal) || kcal < 50) {
+        await ctx.reply('Envie apenas o número de kcal (mínimo 50). Ex: 500');
+        return true;
+    }
+
+    if (!openaiClient) {
+        await ctx.reply('❌ OPENAI_API_KEY não configurada.');
+        targetKcalState.delete(ctx.from.id);
+        return true;
+    }
+
+    await ctx.reply('⏳ Gerando receita...');
+
+    const prompt = [
+        {
+            role: 'system',
+            content: 'Você é um nutricionista. Gere uma receita única em português, organizada e didática. Formato: TÍTULO, linha "━━━━━━━━━━━━━━━━", INGREDIENTES em lista, MODO DE PREPARO numerado, INFO NUTRICIONAL ESTIMADA (kcal aproximada por porção) e DICAS curtas. Seja conciso.'
+        },
+        {
+            role: 'user',
+            content: `Quero uma receita com cerca de ${Math.round(kcal)} kcal no total.`
+        }
+    ];
+
+    try {
+        const completion = await openaiClient.chat.completions.create({
+            model: MODEL,
+            messages: prompt,
+            temperature: 0.4,
+            max_tokens: 400
+        });
+
+        const text = completion.choices?.[0]?.message?.content || '';
+        await ctx.replyWithMarkdown(
+            `🍽️ *Receita para ~${Math.round(kcal)} kcal*\n\n${text}`
+        );
+    } catch (error) {
+        console.error('Erro ao gerar receita por kcal:', error);
+        await ctx.reply('❌ Erro ao gerar receita. Tente novamente.');
+    } finally {
+        targetKcalState.delete(ctx.from.id);
+    }
+
+    return true;
 }
 
 // Inicia fluxo para o paciente enviar o que tem em casa
@@ -461,6 +535,8 @@ module.exports = {
     showFavoriteRecipes,
     generateShoppingList,
     generateRecipeWithRemaining,
+    startTargetKcalFlow,
+    handleTargetKcalInput,
     startPantryFlow,
     handlePantryInput,
 };

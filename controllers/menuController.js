@@ -40,39 +40,39 @@ const buildMainMenu = (planStatus = 'inactive', isAdmin = false) =>
       Markup.button.callback('💰 Renovar Plano', MENU_ACTIONS.RENEW_PLAN)
     ],
     [
-      Markup.button.callback('🧮 Calculadora', MENU_ACTIONS.NUTRITION_CALC),
-      Markup.button.callback('📆 Validade Plano', MENU_ACTIONS.VIEW_RENEWAL)
+      Markup.button.callback('📆 Validade Plano', MENU_ACTIONS.VIEW_RENEWAL),
+      Markup.button.callback('🧮 Calculadora', MENU_ACTIONS.NUTRITION_CALC)
     ],
-    [Markup.button.callback('🍽️ Registrar Alimentos (kcal)', MENU_ACTIONS.CALORIE_LOG)],
     [
       Markup.button.callback('⚖️ Registrar Peso', MENU_ACTIONS.ADD_WEIGHT),
       Markup.button.callback('📊 Evolução Peso', MENU_ACTIONS.WEIGHT_HISTORY)
     ],
-    [Markup.button.callback('🏃 Nível de Atividade', MENU_ACTIONS.ACTIVITY_MENU)],
+    [
+      Markup.button.callback('🍽️ Registrar Alimentos', MENU_ACTIONS.CALORIE_LOG),
+      Markup.button.callback('🏃 Nível de Atividade', MENU_ACTIONS.ACTIVITY_MENU)
+    ],
     [
       Markup.button.callback('📄 Enviar Arquivo', MENU_ACTIONS.UPLOAD_FILE),
       Markup.button.callback('📂 Meus Arquivos', MENU_ACTIONS.FILE_HISTORY)
-    ],
-    [
-      Markup.button.callback('💬 Chat Nutricionista', MENU_ACTIONS.CHAT_NUTRITIONIST),
-      Markup.button.callback('🔔 Lembretes', MENU_ACTIONS.REMINDERS)
     ],
     // NOVAS FUNCIONALIDADES - Linha do Diário Alimentar e Receitas
     [
       Markup.button.callback('📸 Diário Alimentar', MENU_ACTIONS.FOOD_DIARY),
       Markup.button.callback('🍽️ Receitas', MENU_ACTIONS.RECIPES)
     ],
-      [Markup.button.callback('🏋️ Gerar Treino', MENU_ACTIONS.WORKOUT_GENERATOR)],
-    // Linha do Relatório e Indicações
+    [
+      Markup.button.callback('🏋️ Gerar Treino', MENU_ACTIONS.WORKOUT_GENERATOR),
+      Markup.button.callback('🔔 Lembretes', MENU_ACTIONS.REMINDERS)
+    ],
     [
       Markup.button.callback('📊 Meu Relatório', MENU_ACTIONS.REPORT),
       Markup.button.callback('🎁 Indicar Amigo', MENU_ACTIONS.REFERRAL)
     ],
-      // FAQ e Agendamento
-      [
-        Markup.button.callback('❓ FAQ', MENU_ACTIONS.FAQ),
-        Markup.button.callback('📅 Agendar Consulta', MENU_ACTIONS.BOOKING)
-      ],
+    [
+      Markup.button.callback('💬 Chat Nutricionista', MENU_ACTIONS.CHAT_NUTRITIONIST),
+      Markup.button.callback('📅 Agendar Consulta', MENU_ACTIONS.BOOKING)
+    ],
+    [Markup.button.callback('❓ FAQ', MENU_ACTIONS.FAQ)],
     // Linha do Questionário (só aparece se plano ativo)
     ...(planStatus === 'active' ? [[
       Markup.button.callback('📝 Enviar Questionário ⭐', MENU_ACTIONS.FOOD_RECORD),
